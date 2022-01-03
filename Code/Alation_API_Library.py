@@ -23,6 +23,53 @@ import urllib3
 import sys
 
 
+def bulkGlossaryDeletion()
+    #urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning) 
+    # This is an example token. Please replace this with your token.
+    #headers = {'Token': '9ywKLNKjCLeVr8M2msKYwI5Fpx7xLQQqtohwQDVV0aM'}
+
+    # Request all articles with a specific template, Add the template ID to the URL
+    #response = requests.get('https://catalog.mydatadev.saic.com/integration/v1/article/', headers=headers, verify=False)
+
+
+    #Disables HTTPS Warnig assuming that the HTTPS error message is only a warning.
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+    #*******************************************************************************
+    # ALATION API Connection Updates
+    #*******************************************************************************
+
+    #Grabbing Token and Base URL from another file.
+    #This is simply to keep some level of PII protection.
+    from alation_api import alation_dev_token
+    from alation_api import alation_dev_base_url
+
+    alation_api_end_point = '/integration/v1/article/'
+    objecttype = '/article'
+    content = 'application/json'
+    headers = {'token': alation_dev_token, 'Content-Type': content}
+
+    logging.basicConfig(level=logging.INFO,
+                    filename="alation_uploader.log", filemode="w+",
+                    format="%(asctime)s %(levelname)s %(message)s",
+                    datefmt='%Y-%m-%d %H:%M:%S', )
+
+    api_url = alation_dev_base_url + alation_api_end_point + objecttype
+    response = requests.post(api_url, json=api_data, headers=headers, verify=False)
+    
+    articles = json.loads(response.text)
+    counter = 0
+    for article in articles:
+        if len(article["custom_templates"]) > 0: 
+            # Use term IDs to delete the article
+            #response2 = requests.delete('https://catalog.mydatadev.saic.com/integration/v1/article/' + str(article['id']), headers=headers, verify=False)
+            response2 = requests.delete(api_url + str(article['id']), headers=headers, verify=False)
+            counter = counter + 1
+        
+    print("Done. " + str(counter) + " articles removed")
+
+
+
 def bulkGlossaryIngestion(fileName, sheetName):
     #Disables HTTPS Warnig assuming that the HTTPS error message is only a warning.
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -43,7 +90,8 @@ def bulkGlossaryIngestion(fileName, sheetName):
 
     logging.basicConfig(level=logging.INFO,
                     filename="alation_uploader.log", filemode="w+",
-                    format="%(asctime)s %(levelname)s %(message)s", datefmt='%Y-%m-%d %H:%M:%S', )
+                    format="%(asctime)s %(levelname)s %(message)s",
+                    datefmt='%Y-%m-%d %H:%M:%S', )
 
     #*******************************************************************************
     # Hard Coding Excel File To Upload
@@ -67,7 +115,8 @@ def bulkGlossaryIngestion(fileName, sheetName):
         #Designating specific Sheet in the Excel Spreadsheet to ingest
         if sheet == str(sheetName):
 
-            article_template = 'Test_Upload_Template'  # Name of the custom template in Alation
+            # Name of the custom template in Alation
+            article_template = 'Test_Upload_Template'
             api_url = alation_dev_base_url + alation_api_end_point + article_template + \
                       objecttype + '?create_new=true&replace_values=true'
             df = excel_file.parse(sheet)
